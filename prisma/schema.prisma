@@ -1,0 +1,452 @@
+// // This is your Prisma schema file,
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  profile_picture String?
+  password String
+  email_verified Boolean
+  email_OTP Int
+  bio String?
+  role Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //relations
+  credits Credits?
+  teacher Teacher?
+  student Student?
+  admin Admin?
+}
+enum Role {
+  Teacher
+  Student
+  Admin
+
+}
+model Admin{
+  id String @id @default(uuid())
+  user User @relation(fields: [user_id],references: [id])
+  user_id String @unique
+  is_verified_admin Boolean @default(false)
+
+}
+
+model Teacher{
+  id String @id @default(uuid())
+  qualifications String 
+
+  user User @relation(fields: [user_id],references: [id])
+  user_id String @unique
+  
+  //relations
+  teacher_expertiese TeacherExpertise[]
+  course_teacher CourseTeacher[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student{
+  id String @id @default(uuid())
+  user User @relation(fields: [user_id],references: [id])
+  user_id String @unique
+  education_level Education_Levels
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  //RELATIONS
+  enrollments Enrollment[]
+  quiz_submission QuizSubmission[]
+  assignment_submission AssignmentSubmission[]
+  student_interests StudentInterests[]
+}
+
+model Course{
+  id String @id @default(uuid())
+  title String 
+  subtitle String
+  description String
+  level Education_Levels
+  language String
+  status Boolean
+  price Float
+  sales_category Sales_Category
+  avg_ratings Float?
+  total_enrollments Int @default(0)
+  duration Float //in minutes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //relations
+  enrollment Enrollment[]
+  lessons Lesson[]
+  course_category CourseCategory[]
+  course_teacher CourseTeacher[]
+}
+
+model Lesson{
+  id String @id @default(uuid())
+  title String
+  url_video String?
+  url_image String?
+  lesson_text String
+  url_docs String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relations
+  course Course @relation(fields: [course_id],references: [id])
+  course_id String 
+  quiz Quiz @relation("LessonQuiz",fields: [quiz_id],references: [id])
+  quiz_id String @unique
+
+  assignment Assignment @relation("LessonAssignment",fields: [assignment_id], references: [id])
+  assignment_id String @unique
+}
+
+
+model Quiz{
+  id String @id @default(uuid())
+  title String
+  description String
+  questions String
+  timelimit Int //in minutes
+  total_score Int
+  passing_score Int
+  is_active Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //relation
+  quiz_submission QuizSubmission[]
+  lesson Lesson? @relation("LessonQuiz")
+}
+
+model Assignment{
+  id String @id @default(uuid())
+  title String
+  description String
+  questions String
+  timelimit Int //in minutes
+  total_score Int
+  passing_score Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //relation
+  assignment_submission AssignmentSubmission[]
+  lesson Lesson? @relation("LessonAssignment")
+}
+
+model Credits{
+  id String @id @default(uuid())
+  user User @relation(fields: [user_id],references: [id])
+  user_id String @unique
+  points Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction{
+  id String @id @default(uuid())
+  status Transaction_Status
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+}
+
+model Category{
+  id String @id @default(uuid())
+  title String @unique
+  description String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //relations
+  course CourseCategory[]
+  teacher_expertiese TeacherExpertise[]
+  student_interests StudentInterests[]
+
+}
+
+model Rating {
+  id String @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollment_id], references: [id])
+  enrollment_id String @unique
+  rating Float
+  comment String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Enrollment{
+  id String @id @default(uuid())
+  course Course @relation(fields: [course_id],references: [id])
+  course_id String
+  student Student @relation(fields: [student_id],references: [id])
+  student_id String
+  status Enrollment_Status
+  rating Rating?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+} 
+
+model QuizSubmission {
+  id String @id @default(uuid())
+  quiz Quiz @relation(fields: [quiz_id],references: [id])
+  quiz_id String 
+  student Student @relation(fields: [student_id],references: [id])
+  student_id String
+  solution_text String
+  solution_doc_url String?
+  obtained_marks Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([quiz_id,student_id])
+}
+model AssignmentSubmission{
+  id String @id @default(uuid())
+  assignment Assignment @relation(fields: [assignment_id],references: [id])
+  assignment_id String
+  student Student @relation(fields: [student_id],references: [id])
+  student_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([student_id,assignment_id])
+
+}
+// model CourseRating{
+//   id String @id @default(uuid())
+//   enrollment Enrollment @relation(fields: [enrollment_id],references: [id])
+//   enrollment_id String @unique
+//   rating Rating @relation(fields: [rating_id],references: [id])
+//   rating_id String @unique
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+model StudentInterests {
+  id String @id @default(uuid())
+  student Student @relation(fields: [student_id], references: [id])
+  student_id String
+  category Category @relation(fields: [category_id], references: [id])
+  category_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([student_id, category_id])
+}
+model CourseCategory{
+  id String @id @default(uuid())
+  course Course @relation(fields: [course_id],references: [id])
+  course_id String 
+  category Category @relation(fields: [category_id],references: [id])
+  category_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseTeacher{
+  id String @id @default(uuid())
+  course Course @relation(fields: [course_id],references: [id])
+  course_id String
+  teacher Teacher @relation(fields: [teacher_id],references: [id])
+  teacher_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([course_id,teacher_id])
+}
+
+model TeacherExpertise{
+  id String @id @default(uuid())
+  category Category @relation(fields: [category_id],references: [id])
+  category_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teacher Teacher @relation(fields: [teacher_id],references: [id])
+  teacher_id String
+}
+
+enum Enrollment_Status {
+  INPROGRESS
+  PASSED
+  FAILED
+}
+
+
+
+enum Transaction_Status {
+  INPROGRESS
+  SUCCESSFUL
+  FAILED
+}
+enum Sales_Category {
+  FREE
+  BASIC
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+
+enum Education_Levels {
+  PRIMARY_SCHOOL
+  MIDDLE_SCHOOL
+  HIGH_SCHOOL
+  BACHELOR
+  MASTERS
+  DOCTORATE
+  PHD
+  OTHER
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// model User{
+//   user_id Int @id @default(autoincrement())
+//   name String
+//   email String @unique
+//   password String 
+//   requestedRole Role
+//   emailVarified Boolean @default(false)
+//   emailOTP Int
+//   assignedRole Role
+//   avatar String
+//   teacher Teacher?
+//   student Student?
+// }
+
+// model Teacher {
+//   teacher_id Int @id @default(autoincrement())
+//   user User @relation(fields: [user_id], references: [user_id]) // A teacher must be a user first
+//   user_id Int @unique
+//   quizes Quiz[] // A teacher can create multiple quizzes
+//   CourseTeacher CourseTeacher[]
+// }
+
+// model Student{
+//   student_id Int @id @default(autoincrement())
+//   user User @relation(fields: [user_id],references: [user_id])
+//   user_id Int @unique
+//   enrollments Enrollment[]
+//   submisions QuizSubmission[]
+
+// }
+// model Enrollment {
+//   enrollment_Id Int @id @default(autoincrement())
+//   student Student @relation(fields: [student_id], references: [student_id])
+//   student_id Int
+//   course Course @relation(fields: [course_id], references: [course_Id])
+//   course_id Int
+//   enrollment_date DateTime @default(now()) // Track when the student enrolled
+//   status String @default("active") // Track the enrollment status (e.g., active, completed, dropped)
+// }
+// model Quiz{ 
+//   quiz_id Int @id @default(autoincrement())
+//   title String
+//   course Course @relation(fields: [course_id],references: [course_Id])
+//   course_id Int 
+//   teacher Teacher @relation(fields: [teacher_id],references: [teacher_id])
+//   teacher_id Int
+//   submission QuizSubmission[]
+
+// }
+
+// enum Grade {
+//   A
+//   B
+//   C
+//   D
+//   F
+// }
+
+// model QuizSubmission {
+//     quiz_submit_Id Int @id @default(autoincrement())
+//     quiz Quiz @relation(fields: [quiz_id], references: [quiz_id])
+//     quiz_id Int
+//     student Student @relation(fields: [student_id], references: [student_id])
+//     student_id Int
+//     marks Int
+//     grade Grade? // Optional field for the grade assigned by the teacher
+//     submitted_at DateTime
+//     @@unique([quiz_id, student_id])
+// }
+
+// model Course {
+//   course_Id Int @id @default(autoincrement())
+//   title String
+//   description String
+//   textContent String
+//   documentContent String[]
+//   videoContent String[]
+//   teachers CourseTeacher[] // Many-to-many relationship with Teacher
+//   enrollments Enrollment[]
+//   quizes Quiz[]
+//   categories CourseCategory[] 
+// }
+
+
+// model CourseTeacher {
+//   id Int @id @default(autoincrement())
+//   course Course @relation(fields: [course_id], references: [course_Id])
+//   course_id Int
+//   teacher Teacher @relation(fields: [teacher_id], references: [teacher_id])
+//   teacher_id Int
+//   assigned_at DateTime @default(now()) // Example of additional metadata
+// }
+// model Category {
+//   category_Id Int @id @default(autoincrement())
+//   name String @unique
+//   description String?
+//   courses CourseCategory[] // Many-to-many relationship with Course
+// }
+// model CourseCategory {
+//   id Int @id @default(autoincrement())
+//   course Course @relation(fields: [course_id], references: [course_Id])
+//   course_id Int
+//   category Category @relation(fields: [category_id], references: [category_Id])
+//   category_id Int
+//   assigned_at DateTime @default(now()) // Metadata for when the category was assigned
+// }
+// enum Role {
+//   ADMIN
+//   TEACHER
+//   STUDENT
+// }
