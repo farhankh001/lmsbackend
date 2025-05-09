@@ -1,6 +1,7 @@
 import prisma from "../db/config.js";
 
 export const getAllCategories = async (req, res) => {
+    console.log("Category controller called...")
     try {
         const categories = await prisma.category.findMany({
             select: {
@@ -32,6 +33,7 @@ export const getAllCategories = async (req, res) => {
 // ...existing code...
 
 export const createCategory = async (req, res) => {
+   console.log("Create Category Called")
     try {
         const { title, description } = req.body;
 

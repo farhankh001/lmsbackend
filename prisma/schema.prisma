@@ -88,12 +88,13 @@ model Course{
   description String
   level Education_Levels
   language String
-  status Boolean
+  activationStatus Activation_Status?
   price Float
   sales_category Sales_Category
   avg_ratings Float?
   total_enrollments Int @default(0)
-  duration Float //in minutes
+  duration Float //credit hours.
+  course_thumbnail_url String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   //relations
@@ -287,7 +288,10 @@ enum Enrollment_Status {
   FAILED
 }
 
-
+enum Activation_Status {
+  ACTIVE
+  INACTIVE
+}
 
 enum Transaction_Status {
   INPROGRESS
