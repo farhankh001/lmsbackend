@@ -15,7 +15,13 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
 
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(file.path, uploadOptions);
-
+        if(!result){
+            console.log("file was not uploaded due to bad internet.")
+            return {
+                success:false,
+                error:"file was not uploaded due to bad internet!"
+            }
+        }
         // Clean up local file
         await fs.unlink(file.path);
 

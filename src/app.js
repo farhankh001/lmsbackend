@@ -32,6 +32,9 @@ app.use('/',CourseRouer)
 import EnrollmentRouter from "./routes/enrollment.routes.js"
 app.use('/',EnrollmentRouter)
 
+import lessonRouter from "./routes/lesson.routes.js"
+app.use('/',lessonRouter)
+
 app.use(errorHandlerMiddleware);
 
 

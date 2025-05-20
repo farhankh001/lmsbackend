@@ -25,11 +25,11 @@ export const createNewCourse=async(req,res)=>{
             error: "Only teachers can create courses. Please register as a teacher first."
         });
     }
-    const{title,subtitle,description,level,language,activationStatus,sales_category,course_category}=req.body
+    const{title,subtitle,description,level,language,activationStatus,preRequisites,whatYouWillLearn,sales_category,course_category}=req.body
     const price=Number(req.body.price)
     const duration=Number(req.body.duration)
 
-    if(!title || !subtitle || !description || !level || !language || !activationStatus || !sales_category || !price || !duration ||!course_category) {
+    if(!title ||!whatYouWillLearn||!preRequisites|| !subtitle || !description || !level || !language || !activationStatus || !sales_category || !price || !duration ||!course_category) {
         return res.status(400).json({
             success: false,
             error: "All Fields are required to create course."
@@ -53,17 +53,22 @@ export const createNewCourse=async(req,res)=>{
         });
     }
     const uploadResult=await uploadImageToCloudinary(req.file)
+    if(!uploadResult.success===true){
+        return res.status(500).json({error:uploadResult.error})
+    }
     const course=await prisma.course.create({
         data:{
             title,
             subtitle,
             description,
             level,
+            whatYouWillLearn,
             language,
             activationStatus:activationStatus,
             duration,
             price,
             sales_category,
+            preRequisites,
             course_thumbnail_url:uploadResult.url,
             course_category:{
                 create:validatedCourseCategories.map(category=>({
@@ -151,7 +156,6 @@ export const getAllCourses = async(req, res) => {
             sales_category: course.sales_category,
             course_thumbnail_url: course.course_thumbnail_url,
             avg_ratings: course.avg_ratings,
-            enrollments: course._count.enrollment,
             totalLessons: course._count.lessons,
             categories: course.course_category.map(cc => ({
                 id: cc.category.id,
@@ -182,3 +186,108 @@ export const getAllCourses = async(req, res) => {
         });
     }
 };
+
+
+export const getSingleCourse = async(req, res) => {
+    try {
+        const courseId = req.query.courseId;
+        if(!courseId) {
+            return res.status(400).json({
+                success: false,
+                error: "Course Id was not Provided!"
+            });
+        }
+
+        const course = await prisma.course.findUnique({
+            where: {
+                id: courseId
+            },
+            include: {
+                course_category: {
+                    include: {
+                        category: {
+                            select: {
+                                id: true,
+                                title: true,
+                                description: true
+                            }
+                        }
+                    }
+                },
+                course_teacher: {
+                    include: {
+                        teacher: {
+                            select: {
+                                id: true,
+                                qualifications: true,
+                                user: {
+                                    select: {
+                                        name: true,
+                                        profile_picture: true,
+                                        bio: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                _count: {
+                    select: {
+                        enrollment: true,
+                        lessons: true
+                    }
+                }
+            }
+        });
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                error: "Course not found"
+            });
+        }
+
+        // Format single course (not using map since findUnique returns single object)
+        const formattedCourse = {
+            id: course.id,
+            title: course.title,
+            subtitle: course.subtitle,
+            description: course.description,
+            level: course.level,
+            language: course.language,
+            price: course.price,
+            duration: course.duration,
+            status: course.activationStatus,
+            sales_category: course.sales_category,
+            course_thumbnail_url: course.course_thumbnail_url,
+            avg_ratings: course.avg_ratings,
+            total_enrollments: course._count.enrollment,
+            totalLessons: course._count.lessons,
+            categories: course.course_category.map(cc => ({
+                id: cc.category.id,
+                title: cc.category.title,
+                description: cc.category.description
+            })),
+            whatYouWillLearn:course.whatYouWillLearn,
+            preRequisites:course.preRequisites,
+            course_teacher: {
+                id: course.course_teacher[0]?.teacher.id,
+                name: course.course_teacher[0]?.teacher.user.name,
+                profile: course.course_teacher[0]?.teacher.user.profile_picture,
+                qualifications: course.course_teacher[0]?.teacher.qualifications,
+                bio: course.course_teacher[0]?.teacher.user.bio
+            }
+        };
+
+        return res.status(200).json({
+            course: formattedCourse
+        });
+
+    } catch (error) {
+        console.error("Error fetching course:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to fetch course"
+        });
+    }
+}

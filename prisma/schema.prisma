@@ -1,8 +1,5 @@
 // // This is your Prisma schema file,
-// // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -35,7 +32,7 @@ model User{
   //relations
   credits Credits?
   teacher Teacher?
-  student Student?
+  student Student? 
   admin Admin?
 }
 enum Role {
@@ -92,11 +89,12 @@ model Course{
   price Float
   sales_category Sales_Category
   avg_ratings Float?
-  total_enrollments Int @default(0)
   duration Float //credit hours.
   course_thumbnail_url String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  preRequisites String
+  whatYouWillLearn String
   //relations
   enrollment Enrollment[]
   lessons Lesson[]
@@ -116,11 +114,11 @@ model Lesson{
   // relations
   course Course @relation(fields: [course_id],references: [id])
   course_id String 
-  quiz Quiz @relation("LessonQuiz",fields: [quiz_id],references: [id])
-  quiz_id String @unique
+  quiz Quiz? @relation("LessonQuiz",fields: [quiz_id],references: [id])
+  quiz_id String? @unique
 
-  assignment Assignment @relation("LessonAssignment",fields: [assignment_id], references: [id])
-  assignment_id String @unique
+  assignment Assignment? @relation("LessonAssignment",fields: [assignment_id], references: [id])
+  assignment_id String? @unique
 }
 
 
@@ -132,7 +130,7 @@ model Quiz{
   timelimit Int //in minutes
   total_score Int
   passing_score Int
-  is_active Boolean
+  activationStatus Activation_Status
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   //relation
@@ -148,6 +146,7 @@ model Assignment{
   timelimit Int //in minutes
   total_score Int
   passing_score Int
+   activationStatus Activation_Status
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   //relation
@@ -194,7 +193,7 @@ model Rating {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
+  
 model Enrollment{
   id String @id @default(uuid())
   course Course @relation(fields: [course_id],references: [id])
@@ -231,15 +230,7 @@ model AssignmentSubmission{
   @@unique([student_id,assignment_id])
 
 }
-// model CourseRating{
-//   id String @id @default(uuid())
-//   enrollment Enrollment @relation(fields: [enrollment_id],references: [id])
-//   enrollment_id String @unique
-//   rating Rating @relation(fields: [rating_id],references: [id])
-//   rating_id String @unique
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
+
 model StudentInterests {
   id String @id @default(uuid())
   student Student @relation(fields: [student_id], references: [id])
@@ -317,140 +308,3 @@ enum Education_Levels {
   PHD
   OTHER
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// model User{
-//   user_id Int @id @default(autoincrement())
-//   name String
-//   email String @unique
-//   password String 
-//   requestedRole Role
-//   emailVarified Boolean @default(false)
-//   emailOTP Int
-//   assignedRole Role
-//   avatar String
-//   teacher Teacher?
-//   student Student?
-// }
-
-// model Teacher {
-//   teacher_id Int @id @default(autoincrement())
-//   user User @relation(fields: [user_id], references: [user_id]) // A teacher must be a user first
-//   user_id Int @unique
-//   quizes Quiz[] // A teacher can create multiple quizzes
-//   CourseTeacher CourseTeacher[]
-// }
-
-// model Student{
-//   student_id Int @id @default(autoincrement())
-//   user User @relation(fields: [user_id],references: [user_id])
-//   user_id Int @unique
-//   enrollments Enrollment[]
-//   submisions QuizSubmission[]
-
-// }
-// model Enrollment {
-//   enrollment_Id Int @id @default(autoincrement())
-//   student Student @relation(fields: [student_id], references: [student_id])
-//   student_id Int
-//   course Course @relation(fields: [course_id], references: [course_Id])
-//   course_id Int
-//   enrollment_date DateTime @default(now()) // Track when the student enrolled
-//   status String @default("active") // Track the enrollment status (e.g., active, completed, dropped)
-// }
-// model Quiz{ 
-//   quiz_id Int @id @default(autoincrement())
-//   title String
-//   course Course @relation(fields: [course_id],references: [course_Id])
-//   course_id Int 
-//   teacher Teacher @relation(fields: [teacher_id],references: [teacher_id])
-//   teacher_id Int
-//   submission QuizSubmission[]
-
-// }
-
-// enum Grade {
-//   A
-//   B
-//   C
-//   D
-//   F
-// }
-
-// model QuizSubmission {
-//     quiz_submit_Id Int @id @default(autoincrement())
-//     quiz Quiz @relation(fields: [quiz_id], references: [quiz_id])
-//     quiz_id Int
-//     student Student @relation(fields: [student_id], references: [student_id])
-//     student_id Int
-//     marks Int
-//     grade Grade? // Optional field for the grade assigned by the teacher
-//     submitted_at DateTime
-//     @@unique([quiz_id, student_id])
-// }
-
-// model Course {
-//   course_Id Int @id @default(autoincrement())
-//   title String
-//   description String
-//   textContent String
-//   documentContent String[]
-//   videoContent String[]
-//   teachers CourseTeacher[] // Many-to-many relationship with Teacher
-//   enrollments Enrollment[]
-//   quizes Quiz[]
-//   categories CourseCategory[] 
-// }
-
-
-// model CourseTeacher {
-//   id Int @id @default(autoincrement())
-//   course Course @relation(fields: [course_id], references: [course_Id])
-//   course_id Int
-//   teacher Teacher @relation(fields: [teacher_id], references: [teacher_id])
-//   teacher_id Int
-//   assigned_at DateTime @default(now()) // Example of additional metadata
-// }
-// model Category {
-//   category_Id Int @id @default(autoincrement())
-//   name String @unique
-//   description String?
-//   courses CourseCategory[] // Many-to-many relationship with Course
-// }
-// model CourseCategory {
-//   id Int @id @default(autoincrement())
-//   course Course @relation(fields: [course_id], references: [course_Id])
-//   course_id Int
-//   category Category @relation(fields: [category_id], references: [category_Id])
-//   category_id Int
-//   assigned_at DateTime @default(now()) // Metadata for when the category was assigned
-// }
-// enum Role {
-//   ADMIN
-//   TEACHER
-//   STUDENT
-// }
